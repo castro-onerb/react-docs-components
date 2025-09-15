@@ -1,0 +1,33 @@
+import fs from "fs-extra";
+import path from "path";
+import { fileURLToPath } from "url";
+import { parseSVGContent, convertParsedSVG } from "@iconify/utils";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const iconsDir = path.resolve(__dirname, "../svg");
+const outputDir = path.resolve(__dirname, "../json");
+
+fs.ensureDirSync(outputDir);
+
+const files = fs.readdirSync(iconsDir).filter((f) => f.endsWith(".svg"));
+
+files.forEach((file) => {
+  const name = path.basename(file, ".svg");
+  const svgPath = path.join(iconsDir, file);
+  const svgContent = fs.readFileSync(svgPath, "utf-8");
+
+  const parsed = parseSVGContent(svgContent);
+
+  if (!parsed) {
+    console.warn(`Erro ao parsear SVG: ${file}`);
+    return;
+  }
+
+  const iconJSON = convertParsedSVG(parsed);
+
+  const jsonFile = path.join(outputDir, `${name}.json`);
+  fs.writeFileSync(jsonFile, JSON.stringify(iconJSON, null, 2));
+  console.log(`Gerado: ${jsonFile}`);
+});
